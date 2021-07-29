@@ -6,9 +6,11 @@
 
 {% block content %}
 <h1>{{ post.title }}</h1>
-    <a href="{% url 'post_update_url' id=post.id %}">Редактировать</a>
-    <a href="{% url 'post_delete_url' id=post.id %}">Удалить</a>
-    <hr>
+    {% if request.user.is_authenticated and not request.user.role == 'ordinary' %}
+        <a href="{{ post.get_update_url }}" class = 'btn btn-primary'>Редактировать</a>
+        <a href="{{ post.get_delete_url }}" class = 'btn btn-danger'>Удалить</a>
+    {% endif %}
+<hr>
 {% with comments.count as total_comments %}
     <h2>{{ total_comments }} comment{{ total_comments|pluralize }}</h2>
 {% endwith %}
