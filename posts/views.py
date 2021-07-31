@@ -4,12 +4,20 @@ from posts.models import Post
 from posts.forms import PostForm,SearchForm
 from comments.forms import CommentForm
 from posts.utils import ObjectUpdateMixin,ObjectDeleteMixin,ObjectCreateMixin
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 def posts_list_view(request):
+    if not request.user.is_authenticated:
+        return redirect(reverse('posts_list_url'))
     if request.method == 'GET':
-        print(request.user.username)
-        posts = Post.objects.all()
+        if request.user.role == User.UserType.ORDINARY:
+            posts = request.user.posts.all()
+        else:
+            posts = Post.objects.all()
+
         return render(request, 'posts/index.html', context={'posts': posts})
     elif request.method == 'POST':
         search_form = SearchForm(request.POST)
@@ -17,6 +25,7 @@ def posts_list_view(request):
             search_param = search_form.cleaned_data.get('search_param')
             filtered_posts = Post.objects.filter(title__icontains=search_param)
             return render(request, 'posts/index.html', context={'posts': filtered_posts})
+
 
 def post_detail_view(request, id):
     post = get_object_or_404(Post, id=id)
