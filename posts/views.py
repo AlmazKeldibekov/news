@@ -14,41 +14,39 @@ User = get_user_model()
 
 def posts_list_view(request):
     if not request.user.is_authenticated:
-        return redirect(reverse('posts_list_url'))
-    if request.method == 'GET':
-        if request.user.role == User.UserType.ORDINARY:
-            posts = request.user.posts.all()
-        else:
-            posts = Post.objects.all()
+        return redirect(reverse('login_url'))
 
-        page_number = request.GET.get('page', 1)
-        paginator = Paginator(posts, 5)
-        page = paginator.get_page(page_number)
+    if request.user.role == User.UserType.ORDINARY:
+        posts = request.user.posts.all()
+    else:
+        posts = Post.objects.all()
 
-        if page.has_next():
-            next_url = f'?page={page.number + 1}'
-        else:
-            next_url = f'?page={page.number}'
+    search_param = request.GET.get('search')
+    if search_param:
+        posts = posts.filter(title__icontains=search_param)
 
-        if page.has_previous():
-            previous_url = f'?page={page.number - 1}'
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(posts, 5)
+    page = paginator.get_page(page_number)
 
-        else:
-            previous_url = f'?page={page.number}'
+    if page.has_next():
+        next_url = f'?page={page.number + 1}'
+    else:
+        next_url = f'?page={page.number}'
 
-        context = {
-            'page': page,
-            'next_url': next_url,
-            'previous_url': previous_url
-            }
+    if page.has_previous():
+        previous_url = f'?page={page.number - 1}'
 
-        return render(request, 'posts/index.html', context=context)
-    elif request.method == 'POST':
-        search_form = SearchForm(request.POST)
-        if search_form.is_valid():
-            search_param = search_form.cleaned_data.get('search_param')
-            filtered_posts = Post.objects.filter(title__icontains=search_param)
-            return render(request, 'posts/index.html', context={'posts': filtered_posts})
+    else:
+        previous_url = f'?page={page.number}'
+
+    context = {
+        'page': page,
+        'next_url': next_url,
+        'previous_url': previous_url
+        }
+
+    return render(request, 'posts/index.html', context=context)
 
 
 def post_detail_view(request, id):
